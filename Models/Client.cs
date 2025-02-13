@@ -1,3 +1,4 @@
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace AtlanticQiAPI.Models
@@ -16,23 +17,29 @@ namespace AtlanticQiAPI.Models
         public string lastName { get; set; }
 
         [EmailAddress]
-        public string email { get; set; }
+        [MaxLength(100)]
+        public string? email { get; set; } 
 
-        public string phone { get; set; }
+        [MaxLength(20)]
+        public string? phone { get; set; } 
 
-        public DateTime birthDate { get; set; }
+        public DateTime? birthDate { get; set; } 
 
-        public string documentType { get; set; }
+        [MaxLength(20)]
+        public string? documentType { get; set; } 
 
         [Required]
+        [MaxLength(30)]
         public string documentNumber { get; set; }
 
-        public string address { get; set; }
+        [MaxLength(200)]
+        public string? address { get; set; } 
 
-        public string city { get; set; }
+        [MaxLength(50)]
+        public string? city { get; set; } 
 
         public DateTime createdAt { get; set; } = DateTime.Now;
 
-        public DateTime? updatedAt { get; set; }
+        public DateTime? updatedAt { get; set; } 
     }
 }
