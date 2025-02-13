@@ -18,6 +18,17 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Agregar CORS para permitir cualquier origen
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin() // Permite cualquier origen
+               .AllowAnyMethod() // Permite cualquier método (GET, POST, etc.)
+               .AllowAnyHeader(); // Permite cualquier encabezado
+    });
+});
+
 var app = builder.Build();
 
 // Configurar Swagger en entorno de desarrollo
@@ -26,6 +37,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Habilitar CORS para permitir cualquier origen
+app.UseCors("AllowAll");
 
 app.UseHttpsRedirection();
 
