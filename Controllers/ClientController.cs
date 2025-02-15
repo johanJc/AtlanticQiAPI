@@ -78,30 +78,34 @@ public class ClientController : ControllerBase
     [HttpPut("{id}")]
     public async Task<IActionResult> UpdateClient(int id, Client client)
     {
-        if (id != client.idClient)
-            return BadRequest(new { error = "Client ID mismatch" });
-
-        // Validamos que los campos obligatorios no estén vacíos
-        if (string.IsNullOrWhiteSpace(client.firstName) || string.IsNullOrWhiteSpace(client.lastName) ||
-            string.IsNullOrWhiteSpace(client.documentNumber))
-        {
-            return BadRequest(new { error = "First name, last name, and document number are required" });
-        }
-
         var existingClient = await _context.Clients.FindAsync(id);
         if (existingClient == null)
-            return NotFound(new { error = "Client not found" });
+        {
+            return NotFound("Client not found");
+        }
+
+        // Copia manualmente las propiedades, excepto el idClient
+        existingClient.firstName = client.firstName;
+        existingClient.lastName = client.lastName;
+        existingClient.email = client.email;
+        existingClient.phone = client.phone;
+        existingClient.birthDate = client.birthDate;
+        existingClient.documentType = client.documentType;
+        existingClient.documentNumber = client.documentNumber;
+        existingClient.address = client.address;
+        existingClient.city = client.city;
+        existingClient.updatedAt = DateTime.Now;
 
         try
         {
-            _context.Entry(client).State = EntityState.Modified;
             await _context.SaveChangesAsync();
-            return NoContent();
         }
-        catch (DbUpdateException ex)
+        catch (DbUpdateConcurrencyException ex)
         {
-            return BadRequest(new { error = "Database error: " + ex.Message });
+            return Conflict("Concurrency error: " + ex.Message);
         }
+
+        return NoContent();
     }
 
     /// <summary>
