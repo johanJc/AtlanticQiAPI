@@ -14,6 +14,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Habilitar controladores para la API
 builder.Services.AddControllers();
 
+// Asegurar que los controladores estén registrados
+builder.Services.AddControllers().AddApplicationPart(typeof(StatusController).Assembly);
+
+
 // Agregar Swagger para la documentación de la API
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();

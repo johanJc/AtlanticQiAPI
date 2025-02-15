@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using AtlanticQiAPI.Models;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 
 [Route("api/[controller]")]
 [ApiController]
@@ -50,7 +51,6 @@ public class ClientController : ControllerBase
         if (client == null)
             return BadRequest(new { error = "Invalid client data" });
 
-        // Validamos que los campos obligatorios no estén vacíos
         if (string.IsNullOrWhiteSpace(client.firstName) || string.IsNullOrWhiteSpace(client.lastName) ||
             string.IsNullOrWhiteSpace(client.documentNumber))
         {
@@ -65,7 +65,11 @@ public class ClientController : ControllerBase
         }
         catch (DbUpdateException ex)
         {
-            return BadRequest(new { error = "Database error: " + ex.Message });
+            if (ex.InnerException != null && ex.InnerException.Message.Contains("IX_Clients_Email"))
+            {
+                return BadRequest(new { error = "The email provided is already in use." });
+            }
+            return BadRequest(new { error = "Database error: " + (ex.InnerException?.Message ?? ex.Message) });
         }
     }
 
@@ -106,6 +110,45 @@ public class ClientController : ControllerBase
         }
 
         return NoContent();
+    }
+
+
+    /// <summary>
+    /// Actualiza solo el estado de un cliente.
+    /// </summary>
+    /// <param name="id">ID del cliente.</param>
+    /// <param name="statusId">Nuevo estado.</param>
+    /// <returns>NoContent si se actualiza correctamente, o error si no se encuentra el cliente.</returns>
+    [HttpPut("{id}/ChangeStatus")]
+    public async Task<IActionResult> ChangeStatus(int id, [FromBody] JsonElement payload)
+    {
+        // 1️⃣ Validar si se recibe el campo `statusId`
+        if (!payload.TryGetProperty("statusId", out JsonElement statusIdElement) ||
+            !statusIdElement.TryGetInt32(out int statusId))
+        {
+            return BadRequest(new { error = "The field 'statusId' is required and must be an integer." });
+        }
+
+        // 2️⃣ Verificar si el cliente existe
+        var client = await _context.Clients.FindAsync(id);
+        if (client == null)
+        {
+            return NotFound(new { error = "Client not found" });
+        }
+
+        // 3️⃣ Actualizar el estado
+        client.StatusId = statusId;
+        client.updatedAt = DateTime.Now;
+
+        try
+        {
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Client status updated successfully" });
+        }
+        catch (DbUpdateException ex)
+        {
+            return StatusCode(500, new { error = "Database error: " + ex.Message });
+        }
     }
 
     /// <summary>
